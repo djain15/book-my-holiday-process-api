@@ -1,0 +1,31 @@
+image: maven:3.6.0
+pipelines:
+  branches:
+    feature/*:
+      - step:
+          name: MuleSoft Build and test
+          caches:
+            - maven
+          script:
+            - echo "Building Mulesoft application"
+            - mvn clean install
+            
+    develop:
+      - step:
+          name:  MuleSoft Build and test
+          caches:
+            - maven
+          script:
+            - echo "Building Mulesoft application"
+            - mvn clean install
+      - step:
+          name: Deployment to Development environmet
+          deployment: Development
+          caches:
+            - maven
+          script:
+            - echo "Deploying Mulesoft application"
+            - mvn deploy -Dmuledeploy -Danypoint.platform.environment=Sandbox -Dapplication.name=book-my-holiday-process-api -Dmule.env=dev -Dapplication.runtimeVersion=4.4.0-20230918 -Dapplication.region=us-east-2 -Dapplication.workers=1 -Dapplication.workerType=MICRO -Danypoint_platform_client_id=$anypoint_platform_client_id_test -Danypoint_platform_client_secret=$anypoint_platform_client_secret_test
+          
+          
+          

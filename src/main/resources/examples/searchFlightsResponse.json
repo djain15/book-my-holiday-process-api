@@ -1,0 +1,44 @@
+{
+  "code" : 200,
+  "status" : "SUCCESS",
+  "transactionId" : "1223",
+  "response" :[
+  {
+    "flightId": "F1234",
+    "partner": "Indigo",
+    "price": 4000,
+    "departureDate": "2020/02/18",
+    "origin": "Bangalore",
+    "destination": "Delhi",
+    "noOfPerson" :2,
+    "bookingId": 123,
+    "availableSeats" :2
+
+    
+  },
+  {
+    "flightId": "F6789",
+    "partner": "Indigo",
+    "price": 5000,
+    "departureDate": "2020/02/26",
+    "origin": "Bangalore",
+    "destination": "jammu",
+    "noOfPerson" :2,
+    "bookingId": 123,
+    "availableSeats" :2
+     
+
+  },
+  {
+    "flightId": "F2234",
+    "partner": "Indigo",
+    "price": 3000,
+    "departureDate": "2020/02/18",
+    "origin": "Goa",
+    "destination": "Calcutta",
+    "noOfPerson" :2,
+    "bookingId": 123, 
+    "availableSeats" :2
+  }
+]
+}
