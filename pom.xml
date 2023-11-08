@@ -42,6 +42,8 @@
 						<properties>
 						    <env>${env}</env>
 							<key>value</key>
+							<anypoint.platform.client_id>db05b43b3af549fb9895146833f8a386</anypoint.platform.client_id>
+							<anypoint.platform.client_secret>E0180585f0cc4B6280fcFbBb9e518a60</anypoint.platform.client_secret>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
