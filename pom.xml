@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-	<artifactId>book-my-holiday-process-api</artifactId>
+	<artifactId>book-my-holiday-process-api-v1</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
-	<name>book-my-holiday-process-api</name>
+	<name>book-my-holiday-process-api-v1</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
