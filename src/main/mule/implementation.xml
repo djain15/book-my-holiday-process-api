@@ -387,6 +387,7 @@ output application/json
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
+import * from dw::core::Strings
 ---
 {
 	bookId: substringAfter(message.attributes.queryParams.bookingId,"H")
