@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ecb67bb4-b02f-4175-aed3-0dd72c657063</groupId>
-	<artifactId>book_my_car_process_api</artifactId>
+	<artifactId>book-my-car-process-api</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
-	<name>bookmycar_process_api</name>
+	<name>book-my-car-process-api</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
