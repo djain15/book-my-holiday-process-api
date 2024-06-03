@@ -1,0 +1,27 @@
+db:
+ url: "https://book-my-car-system-db-api-2gr6d0.5sc6y6-3.usa-e2.cloudhub.io/api/v1"
+ attempt: "2"
+ interval: "10000"
+ responseTimeout : "12000"
+ 
+ 
+sfdc:
+ url: "https://book-my-car-system-sfdc-api-2gr6d0.5sc6y6-4.usa-e2.cloudhub.io/api/v1"
+ attempt: "2"
+ interval: "10000"
+ responseTimeout : "12000"
+ 
+smtp:
+  host: "smtp.gmail.com"
+  port: "587"
+  username: "dhanshree.c.jain@apisero.com"
+  toAddress: "dhanshree.c.jain@apisero.com"
+  key: "mail.smtp.starttls.enable"
+  value: "true"
+  connectiontimeout: "10"
+  writetimeout: "20"
+  readtimeout: "20" 
+  
+
+api:
+  autodiscovery: "19559315"    

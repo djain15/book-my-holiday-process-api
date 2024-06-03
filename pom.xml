@@ -2,19 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-	<artifactId>book-my-holiday-process-api-v1</artifactId>
+	<groupId>ecb67bb4-b02f-4175-aed3-0dd72c657063</groupId>
+	<artifactId>book_my_car_process_api</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
 
-	<name>book-my-holiday-process-api-v1</name>
+	<name>bookmycar_process_api</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
-		<app.runtime>4.4.0-20230918</app.runtime>
-		<mule.maven.plugin.version>3.8.2</mule.maven.plugin.version>
+		<app.runtime>4.6.3</app.runtime>
+		<mule.maven.plugin.version>4.0.0</mule.maven.plugin.version>
 	</properties>
 
 	<build>
@@ -30,22 +29,41 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<cloudHubDeployment>
+					<classifier>mule-application</classifier>
+					<cloudhub2Deployment>
 						<uri>https://anypoint.mulesoft.com</uri>
+						<provider>MC</provider>
+						<environment>${environment}</environment>
 						<muleVersion>${app.runtime}</muleVersion>
+						<target>${target}</target>
+						<!-- <connectedAppClientId>c1ece2540f8944949f5fa4f25d892489</connectedAppClientId>
+						<connectedAppClientSecret>00eAa41c6e4848DF84c30e8F10ab8044</connectedAppClientSecret> -->
+						<!-- <connectedAppGrantType>client_credentials</connectedAppGrantType> -->
 						<username>${username}</username>
 						<password>${password}</password>
-						<applicationName>${project.artifcatId}</applicationName>
-						<environment>Sandbox</environment>
-						<workerType>${workerType}</workerType>
-						<workers>1</workers>
+						<server>anypoint-exchange</server>
+						<applicationName>${name}</applicationName>
+						<businessGroupId>${groupId}</businessGroupId>
+						<replicas>${replicas}</replicas>
+						<vCores>${vCores}</vCores>
 						<properties>
-						    <env>${env}</env>
-							<key>value</key>
-							<anypoint.platform.client_id>db05b43b3af549fb9895146833f8a386</anypoint.platform.client_id>
-							<anypoint.platform.client_secret>E0180585f0cc4B6280fcFbBb9e518a60</anypoint.platform.client_secret>
+							<env>${env}</env>
 						</properties>
-					</cloudHubDeployment>
+						<secureProperties>
+							<key>${key}</key>
+							<anypoint.platform.client_id>${anypoint.platform.client_id}</anypoint.platform.client_id>
+							<anypoint.platform.client_secret>${anypoint.platform.client_secret}</anypoint.platform.client_secret>
+						</secureProperties>
+						<deploymentSettings>
+							<http>
+								<inbound>
+									<forwardSslSession>false</forwardSslSession>
+									<lastMileSecurity>false</lastMileSecurity>
+								</inbound>
+							</http>
+							<generateDefaultPublicUrl>true</generateDefaultPublicUrl>
+						</deploymentSettings>
+					</cloudhub2Deployment>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -53,58 +71,51 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-http-connector</artifactId>
-			<version>1.7.3</version>
+			<groupId>org.mule.modules</groupId>
+			<artifactId>mule-validation-module</artifactId>
+			<version>2.0.6</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-sockets-connector</artifactId>
-			<version>1.2.3</version>
+			<artifactId>mule-objectstore-connector</artifactId>
+			<version>1.2.2</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-vm-connector</artifactId>
+			<version>2.0.1</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.modules</groupId>
 			<artifactId>mule-apikit-module</artifactId>
-			<version>1.9.1</version>
+			<version>1.10.4</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-db-connector</artifactId>
-			<version>1.14.3</version>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.4</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.modules</groupId>
+			<artifactId>mule-secure-configuration-property-module</artifactId>
+			<version>1.2.7</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
-			<artifactId>mule-wsc-connector</artifactId>
-			<version>1.8.3</version>
+			<artifactId>mule-email-connector</artifactId>
+			<version>1.7.3</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
-			<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-			<artifactId>bookmyholiday</artifactId>
-			<version>1.0.15</version>
-			<classifier>raml</classifier>
-			<type>zip</type>
-		</dependency>
-		<dependency>
-			<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-			<artifactId>mule-plugin-bookmyholiday-customers-sys-api</artifactId>
-			<version>1.0.3</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-			<artifactId>mule-plugin-bookmyholiday-car-sys-api</artifactId>
-			<version>1.0.1</version>
-			<classifier>mule-plugin</classifier>
-		</dependency>
-		<dependency>
-			<groupId>8e0980a4-3554-40bb-8ef7-b86275562073</groupId>
-			<artifactId>mule-plugin-bookmyholiday-flights-sys-api</artifactId>
-			<version>1.0.3</version>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>1.9.3</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 	</dependencies>

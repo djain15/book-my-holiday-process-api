@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	
+	<sub-flow name="employee-sync-batch-implementation-subflow" doc:id="da3c715b-f382-4194-91d3-cd99fecda260" >
+		<logger level="DEBUG" doc:name="LOG Starts" doc:id="3cf4396c-017d-458b-b716-ccd44f4d1703" message="DataSyncFLow Logger Begin"/>
+		<http:request method="GET" doc:name="Fetch Booking from Database" doc:id="aa1e415c-7c69-4053-8712-6e2609c811e4" url="#[Mule::p('db.url') ++ &quot;/booking&quot;]" responseTimeout="${db.responseTimeout}" sendCorrelationId="AUTO">
+			<reconnect frequency="${db.interval}" count="${db.attempt}" />
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"x-correlation-id" : vars.transactionId,
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/json
+---
+{
+	bookingDate : vars.bookingDate
+}]]]></http:query-params>
+		</http:request>
+		<batch:job jobName="Data-sync-process-batch-job" doc:id="3ffdd174-aaf4-45f7-b33b-88bc87f0b0bb" blockSize="3" maxFailedRecords="-1">
+			<batch:process-records>
+				<batch:step name="Data-sync-process-batch-step" doc:id="3c220580-f745-4b9f-85e0-a555418a9e01" acceptPolicy="ALL">
+					<batch:aggregator doc:name="Batch Aggregator for SFMC invocation" doc:id="8cf2ebe0-7841-41f7-affb-aa26d04b9ecb" size="3" preserveMimeTypes="true">
+						<ee:transform doc:name="DW Prepare SFMC Batch Request" doc:id="1e1e67f3-c601-421d-b726-34cf60f61872" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<logger level="DEBUG" doc:name="Inside batch processor" doc:id="9689e6bd-0192-4b7b-bdbd-00a671f2b580" message="***********************************Inside batch processor*******************************************"/>
+						<logger level="INFO" doc:name="LOG SFMC Request Payload" doc:id="1fcb15a9-caf3-4f64-8b77-c58a6e2a9a5a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; "TransactionTime" : now(),&#10; "FlowName" :flow.name,&#10; "InputPayloadToSFMC": payload,&#10; "TransactionId" : vars.transactionId&#10;}]' />
+						<http:request method="POST" doc:name="Insert BookingDetails Into SFMC" doc:id="63767b7e-b34f-42c5-8e65-c0ba8ed167ad" url="#[Mule::p('sfdc.url') ++ &quot;/booking&quot;]" responseTimeout="${sfdc.responseTimeout}">
+								<reconnect frequency="${sfdc.interval}" count="${sfdc.attempt}" />
+							<http:headers><![CDATA[#[output application/java
+---
+{
+	"x-correlation-id" : vars.transactionId,
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+							</http:request>
+						<logger level="INFO" doc:name="Inside batch aggregator" doc:id="bf1174d4-d841-4eec-a4cb-441b87ac05e1" message="***********************************Inside batch aggregator*******************************************" />
+						<logger level="INFO" doc:name="LOG SFDC Response Payload" doc:id="14fcdaa3-8dfe-4095-ab14-f2975ee61182" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; "TransactionTime" : now(),&#10; "FlowName" :flow.name,&#10; "OutputPayloadFromSFMC": payload,&#10; "TransactionId" : vars.transactionId&#10;}]' />
+					</batch:aggregator>
+					<ee:transform doc:name="DW Transform DB Record to SFMC Object" doc:id="e07d3e5b-916c-449b-be0c-8d10598ff0ad" >
+						<ee:message >
+							<ee:set-payload resource="dwl/book-my-car-db-to-sfdc-record.dwl" />
+						
+</ee:message>
+					</ee:transform>
+				</batch:step>
+				<batch:step name="OnlyFailuresRecords" doc:id="82eafa22-dc80-4159-b877-bcc2bcefc0ad" acceptPolicy="ONLY_FAILURES">
+					<vm:publish doc:name="Publish To Failed Queue" doc:id="fcd156d0-d21b-4c96-9d2c-81c80ff200a9" queueName="FailedMessages" timeout="20" correlationId="#[vars.transactionId]" config-ref="VM_Config">
+						<reconnect />
+					</vm:publish>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete>
+				<os:store doc:name="Store" doc:id="1680f26d-f695-44e2-ab56-ab4febd690f8" key="bookingDate" objectStore="Object_store">
+					<os:value ><![CDATA[#[%dw 2.0
+import substringBefore from dw::core::Strings
+---
+//substringBefore(now() as String ,".")
+
+now() as Date]]]></os:value>
+				</os:store>
+
+			</batch:on-complete>
+		
+</batch:job>
+	</sub-flow>
+	<flow name="employee-sync-batch-implementation-error-processing-subflow" doc:id="8618f757-9f9a-486a-844a-1e133670c2ce" >
+		<vm:listener doc:name="Listener" doc:id="bd9381b6-0803-4d99-aaa5-9c7679a54d5d" queueName="FailedMessages" timeout="20" config-ref="VM_Config"/>
+		<logger level="INFO" doc:name="LOG SFMC Failed Payload" doc:id="7862fc9f-62c8-40a5-8a05-34cded86be5e" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; "TransactionTime" : now(),&#10; "FlowName" :flow.name,&#10; "InputPayloadToSFMC": payload,&#10; "TransactionId": attributes.correlationId&#10;}]'/>
+	</flow>
+	</mule>

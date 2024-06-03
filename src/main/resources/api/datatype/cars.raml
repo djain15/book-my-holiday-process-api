@@ -1,0 +1,95 @@
+#%RAML 1.0 Library
+usage: get Cars api data types
+
+uses:
+  common-data-model : /exchange_modules/ecb67bb4-b02f-4175-aed3-0dd72c657063/common-traits-library/1.0.0/common-traits-library.raml
+
+
+types:
+  getCarsList:
+    type: array
+    items:
+     properties:
+       condition: string
+       model: string
+       mileagePL: string
+       class: string
+       drive: string
+       fuel_type: string
+       make: string
+       transmission: string
+       year?: string
+       
+  getCarbyBookingIdRs:
+    type: object
+    properties:
+       bookingId : string
+       bookingDate : string
+       name : string
+       phone : string
+       emailAddress : string
+       vechile?:
+         type: object
+         properties:
+           class? : string
+           fuelType? : string
+           make? : string
+           model? : string
+           color? : string
+           transmission? : string
+           year? : string
+       
+
+  bookCarRes:
+    type: object
+    properties:
+      bookingId: string
+      bookingDate: string
+      
+
+
+  
+  bookCarRq:
+    type: object
+    properties:
+     condition : string
+     make : string
+     model : string
+     colour: string
+     class : string
+     fuelType : string
+     transmission : string
+     year? : string
+     customerDetails : 
+      type : object
+      properties:
+       name: string
+       phone : string
+       emailAddress: string
+       city: string
+  
+  UpdateCarBookingReq:
+    type: object
+    properties:
+      bookingId : string
+      customerDetails : 
+       type : object
+       properties:
+         name?: string
+         phone : string
+         emailAddress: string
+         city?: string
+
+  UpdateCustomerReq:
+    type: object
+    properties:
+       name?: string
+       phone? : string
+       emailAddress?: string
+       city?: string
+
+  UpdateCustomerRes :
+     type: object
+     properties:
+       customerId : string     
+

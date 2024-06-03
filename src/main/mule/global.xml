@@ -1,108 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
-	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:book-car="http://www.mulesoft.org/schema/mule/book-car" xmlns:book-flight="http://www.mulesoft.org/schema/mule/book-flight" xmlns:book-my-holiday="http://www.mulesoft.org/schema/mule/book-my-holiday" xmlns:create-customer="http://www.mulesoft.org/schema/mule/create-customer" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd  http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/book-my-holiday http://www.mulesoft.org/schema/mule/book-my-holiday/current/mule-book-my-holiday.xsd http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd http://www.mulesoft.org/schema/mule/book-car http://www.mulesoft.org/schema/mule/book-car/current/mule-book-car.xsd http://www.mulesoft.org/schema/mule/book-flight http://www.mulesoft.org/schema/mule/book-flight/current/mule-book-flight.xsd http://www.mulesoft.org/schema/mule/create-customer http://www.mulesoft.org/schema/mule/create-customer/current/mule-create-customer.xsd
-http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
-    <http:listener-config name="bookmyholiday-httpListenerConfig">
-        <http:listener-connection host="0.0.0.0" port="8081" />
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="a088bec0-ded9-4077-99d5-6427e0b5f6e7" file="properties\book-my-car-process-api-config-${env}.yaml" />
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="acb87eb2-5033-4a83-99e9-668188d2c92f"/>
+	<http:listener-config name="bookmycar-process-api-httpListenerConfig"  doc:id="44a3cac7-dbf3-4ff1-a46f-6bc3033227e1">
+        <http:listener-connection host="0.0.0.0" port="8081"/>
     </http:listener-config>
-    <apikit:config name="bookmyholiday-config" api="resource::8e0980a4-3554-40bb-8ef7-b86275562073:bookmyholiday:1.0.15:raml:zip:bookmyholiday.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <configuration-properties doc:name="Configuration properties" doc:id="d1ac9793-2e80-426d-b8ce-df34956d23e1" file="config.properties" />
-    <book-car:config name="BookCar_Config" doc:name="BookCar Config" doc:id="f7bcafbb-caaa-4b25-b7fb-018304c3b7b4" property_basePath="/api/" property_protocol="HTTPS" property_host="${bookmyholiday.cars.host}" property_port="${bookmyholiday.cars.port}" />
-    <book-flight:config name="BookFlight_Config" doc:name="BookFlight Config" doc:id="623eeaaf-0755-4c4e-890c-139baad1f507" property_host="${bookmyholiday.flights.host}" property_port="${bookmyholiday.flights.port}" property_basePath="/api/" property_protocol="HTTPS" />
-    <create-customer:config name="CreateCustomer_Config" doc:name="CreateCustomer Config" doc:id="5ca9ac49-f822-44b4-a7f6-f19062fe3bc0" property_host="${bookmyholiday.customers.host}" property_port="${bookmyholiday.customers.port}" property_basePath="/api" property_protocol="HTTPS" />
-    <wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="8721aebb-f29e-4002-8f5a-515a08fcbd5e">
-        <wsc:connection wsdlLocation="https://book-hotel-sys-api-x48a5b.5sc6y6-3.usa-e2.cloudhub.io/BookMyflights-service1/PortTypeEndpoint1?wsdl" service="BookMyflights-service1" port="PortTypeEndpoint1" address="https://${bookmyholiday.hotels.host}/BookMyflights-service1/PortTypeEndpoint1">
-            <wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
-        </wsc:connection>
-    </wsc:config>
-    <configuration doc:name="Configuration" doc:id="830025e5-433d-4c0a-aa00-31c147ace17f" defaultErrorHandler-ref="globalError_Handler" />
-	<api-gateway:autodiscovery apiId="19076341" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="484521eb-3452-4b31-bb36-bdb4dcd2473a" flowRef="bookmyholiday-main" />
-	<error-handler name="globalError_Handler" doc:id="d106c756-c0e6-489c-a4f5-1974a0f041e9" >
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="01f739f4-91c6-4957-afba-149011fbf531" type="HTTP:BAD_GATEWAY, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
-			<ee:transform doc:name="Transform Message" doc:id="909710f7-ba38-4215-b207-cc06399d80b5" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-error]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-			<logger level="ERROR" doc:name="Logger" doc:id="f5ef1cec-5ebf-47e8-ae03-5fe5782aa860" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	errorCode: payload.errorMessage.attributes.statusCode,&#10;	failingComponent: error.failingComponent as String default "",&#10;	errorDescription: error.detailedDescription as String default "",&#10;	correlationId: correlationId&#10;}]'/>
-			<ee:transform doc:name="Transform Message" doc:id="47a4edd0-976d-44c7-b55b-ebedc63481ff" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	
-  "code": payload.errorMessage.attributes.statusCode default 500,
-  "status": "FAILURE",
-   "transactionId": vars.correlationId,
-  "response": {
-    "message": payload.errorType.identifier,
-    "details": (payload.detailedDescription as String default " ")   ++ (payload.StatusDesc default " ") ++ (payload.Status.StatusDesc default "") ++ (payload.errorResponse.developerInfo.moreInfo default "")
-    }
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-		</on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e842127a-c2f8-4209-b554-dd74a3dc4d08" type="DB:BAD_SQL_SYNTAX, DB:CONNECTIVITY, DB:QUERY_EXECUTION, EXPRESSION">
-			<ee:transform doc:name="Transform Message" doc:id="1bfc1d02-d686-4ae7-8fdb-1e6a3ce6b40e" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-error]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-			<logger level="ERROR" doc:name="Logger" doc:id="4cb82518-9fce-4dc4-853d-18582c494f44" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	errorCode: payload.errorMessage.attributes.statusCode,&#10;	failingComponent: error.failingComponent as String default "",&#10;	errorDescription: error.detailedDescription as String default "",&#10;	correlationId: correlationId&#10;}]'/>
-			<ee:transform doc:name="Transform Message" doc:id="fe1c5b64-29a4-492f-a951-5512ad6be033" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	
-  "code": payload.errorMessage.attributes.statusCode default 500,
-  "status": "FAILURE",
-  "transactionId": vars.correlationId,
-  "response": {
-    "message": payload.errorType.identifier,
-    "details": (payload.detailedDescription as String default " ")  ++  ++ (payload.StatusDesc default " ") ++ (payload.Status.StatusDesc default "") ++ (payload.errorResponse.developerInfo.moreInfo default "")
-    }
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-		</on-error-propagate>
-		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="9f9d1174-cd1e-48fd-8e97-69ca94eca651" type="ANY">
-			<ee:transform doc:name="Transform Message" doc:id="acd50c78-7fad-4244-8ada-c5e1fd8575cd" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-			<logger level="INFO" doc:name="Logger" doc:id="291e5c52-c2e7-4826-b69f-289c55ff2d20" />
-			<ee:transform doc:name="Transform Message" doc:id="637ba3b8-bcb3-475a-a3f7-59b6e7eeb313" >
-				<ee:message >
-					<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	
-  "code": error.errorMessage.attributes.statusCode,
-  "status": "FAILURE",
-  "transactionId": vars.correlationId,
-  "response": {
-    "message": error.errorType.identifier,
-    "details": (error.detailedDescription as String default " ") ++ "||" ++ (payload.Status.ServerStatusDesc default " ") ++ (payload.StatusDesc default " ") ++ (payload.Status.StatusDesc default "") ++ (payload.errorResponse.developerInfo.moreInfo default "")
-    }
-}]]></ee:set-payload>
-				</ee:message>
-			</ee:transform>
-		</on-error-propagate>
-	</error-handler>
+    <email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="fb3ca31f-ac4b-4033-9fbc-3745e4a81d65" >
+		<email:smtp-connection host="${smtp.host}" port="${smtp.port}" user="${smtp.username}" password="ydgc zdpr hofc hwuw" connectionTimeout="${smtp.connectiontimeout}" readTimeout="${smtp.readtimeout}" writeTimeout="${smtp.writetimeout}">
+			<reconnection >
+				<reconnect-forever />
+			</reconnection>
+			<email:properties >
+				<email:property key="${smtp.key}" value="${smtp.value}" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+    <apikit:config name="bookmycar-process-api-config" api="bookmycar-process-api.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	<configuration doc:name="Configuration" doc:id="cd9b54e8-0030-4575-907c-55108bad83b9" defaultErrorHandler-ref="global-error-handler" />
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="ad8b9ac5-97af-4964-b565-f566d242122b" file="properties\book-my-car-process-api-secure-config-${env}.yaml" key="${key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+	 <api-gateway:autodiscovery apiId="${api.autodiscovery}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="87eafee5-d568-447c-bf99-74015786a3b8" flowRef="bookmycar-process-api-main" />  
+	<vm:config name="VM_Config" doc:name="VM Config" doc:id="3e68f325-7224-44c2-b470-f7874cd2594a" > 
+		<vm:queues >
+			<vm:queue queueName="FailedMessages" queueType="PERSISTENT" maxOutstandingMessages="2000" />
+		</vm:queues>
+	</vm:config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="816bb1b2-ffb6-4367-9687-2a12b5e64ad3" />
 </mule>

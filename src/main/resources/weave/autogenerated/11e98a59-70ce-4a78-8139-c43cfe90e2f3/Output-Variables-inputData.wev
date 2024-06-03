@@ -1,0 +1,21 @@
+%dw 2.0
+
+type auto_11e98a59_70ce_4a78_8139_c43cfe90e2f3_Output_Variables_inputData = {
+  condition: String, 
+  colour: String, 
+  transmission: String, 
+  fuelType: String, 
+  year: String, 
+  model: String, 
+  customerDetails: {
+    emailAddress?: String, 
+    phone?: String, 
+    city?: String, 
+    name?: String, 
+    _?: Any
+  }, 
+  make: String, 
+  class: String, 
+  _?: Any
+}
+

@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_9f548d87_8fd8_43e8_9d80_85f94532c84f_Input_Payload = {|  |}
+

@@ -1,401 +1,179 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:create-customer="http://www.mulesoft.org/schema/mule/create-customer" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
-	xmlns:book-flight="http://www.mulesoft.org/schema/mule/book-flight" xmlns:book-car="http://www.mulesoft.org/schema/mule/book-car" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/book-car http://www.mulesoft.org/schema/mule/book-car/current/mule-book-car.xsd
-http://www.mulesoft.org/schema/mule/book-flight http://www.mulesoft.org/schema/mule/book-flight/current/mule-book-flight.xsd
-http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/create-customer http://www.mulesoft.org/schema/mule/create-customer/current/mule-create-customer.xsd">
-	<sub-flow name="getPackage" doc:id="50766df8-8c72-4d73-8f0f-45cd2f10dd76" >
-		<logger level="INFO" doc:name="Logger Start" doc:id="759ac47d-dfa1-4db9-8083-7c0acc50dc88" />
-		<scatter-gather doc:name="Scatter-Gather" doc:id="8f93d805-f354-495b-8ff2-03dec0fcff4d" >
-			<route >
-				<book-car:get-cars doc:name="Get cars" doc:id="c46c39d0-89c2-48e9-ab5c-33db2a30a374" config-ref="BookCar_Config" source="#[vars.queryParamsReq.source]" destination="#[vars.queryParamsReq.destination]" client-id="${bookmyholiday.cars.client_id}" client-secret="${bookmyholiday.cars.client_secret}"/>
-				<logger level="INFO" doc:name="Logger" doc:id="608e098e-5fa1-4ec6-bb27-2702267ab234" message='"getCars response " #[payload]'/>
-				<ee:transform doc:name="Transform Message from System Api to Process API" doc:id="b550180f-a7ce-47cd-8c2f-db63ccfec9fa" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-"cars": 
-payload map ( payload01 , indexOfPayload01 ) -> {
-	regNo: payload01.regNo,
-	model: payload01.model,
-	partner: payload01.partner,
-	source: payload01.source,
-	destination: payload01.destination,
-	price: payload01.price
-	}
-
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-			<route >
-				<book-flight:get-flights doc:name="Get flights" doc:id="6c937abe-958f-4fc6-94ba-562cf9d5f41a" config-ref="BookFlight_Config" origin="#[vars.queryParamsReq.source]" destination="#[vars.queryParamsReq.destination]" departure-date="#[vars.queryParamsReq.date]" client-id="${bookmyholiday.flights.client_id}" client-secret="${bookmyholiday.flights.client_secret}"/>
-				<logger level="INFO" doc:name="Logger" doc:id="c32b23b1-39ad-48c2-8cc1-4848079a701d" message='"getFlights response " #[payload]'/>
-				<ee:transform doc:name="Transform Message from System Api to Process API" doc:id="7e507698-87eb-4ab3-9f6e-292c23ec0d1e" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[output application/json
----
-[{
-	flights: payload.response map ( response , indexOfResponse ) -> {
-		flightId: response.flightId,
-		partner: response.partner,
-		price: response.price,
-		departureDate: response.departureDate,
-		origin: response.origin,
-		destination: response.destination,
-		noOfPerson: response.noOfPerson,
-		bookingId: response.bookingId,
-		availableSeats: response.availableSeats
-	}
-}]
-
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-			<route >
-				<ee:transform doc:name="Transform Message" doc:id="a4e35305-5649-48e5-8f91-0013922b8a27" >
-					<ee:message >
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="varsSoapSearchReqXML" ><![CDATA[%dw 2.0
-output application/xml
-ns ns0 http://www.tibco.com/schemas/tibcoWS/sharedresource/schema/Schema.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<sub-flow name="book-car-request-subflow" doc:id="c5faf4d1-dae6-4da3-84ca-92d89a0e8de0" >
+		<logger level="DEBUG" doc:name="LOG DEBUG  start For Booking Request" doc:id="7ebcdb8e-88ca-4f59-a193-c548691c6e74" message="LOG DEBUG  start For Booking Request"/>
+		<http:request method="POST" doc:name="POST /Booking flow" doc:id="4545dcea-b2ff-4e12-90e0-b035fbfb60a1" url="#[Mule::p('db.url') ++ &quot;/cars&quot;]" responseTimeout="${db.responseTimeout}" sendCorrelationId="AUTO">
+			<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+			<http:body><![CDATA[#[vars.bookRequest]]]></http:body>
+			<http:headers><![CDATA[#[output application/json
 ---
 {
-	ns0#BookMyHotels: {
-		ns0#Hotels: {
-			ns0#location: vars.queryParamsReq.destination
-		}
-	}
-}]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<wsc:consume doc:name="Consume" doc:id="b5d5919f-862b-446a-bb1e-53b31a1a9152" config-ref="Web_Service_Consumer_Config" operation="SearchHotelsByLocation">
-					<wsc:message >
-						<wsc:body ><![CDATA[#[vars.varsSoapSearchReqXML]]]></wsc:body>
-					</wsc:message>
-				</wsc:consume>
-				<logger level="INFO" doc:name="Logger" doc:id="40c3d130-c1c3-4297-af56-abd5e4816e21" message='"getHotels response " #[payload]'/>
-				<ee:transform doc:name="Transform Message from Soap XML to JSON" doc:id="16b4f359-74c6-48ba-b8ba-396f21664f7d" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[output application/json
-ns ns0 http://www.tibco.com/schemas/Untitled1/schema/Schema.xsd
----
-"hotels":
-payload.body.ns0#BookmyHotel.*ns0#Hotels map ( hotel , indexOfHotel ) -> {
-	city: hotel.ns0#location default "",
-	hotelName: hotel.ns0#hotelName default "",
-	hotelId: hotel.ns0#hotelId default "",
-	noOfRooms: hotel.ns0#roomType default "",
-	tariff: hotel.ns0#price as String default "",
-	 "portal": "bookMyHoliday.com"
-}
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-		</scatter-gather>
-		<ee:transform doc:name="Transform Message" doc:id="980b9636-07a3-464c-a4bd-c9020f0d30e6" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-Packages:
-flatten(payload..payload)]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="Logger for Accumulated Output" doc:id="4cef9ad9-4383-4fc8-9cfc-b7454b738c89" message="#[payload]"/>
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+		</http:request>
+		<logger level="DEBUG" doc:name="LOG DEBUG  ends For Booking Request" doc:id="684e6abe-c876-44b7-b738-7565b9cd619f" message="LOG DEBUG  ends For Booking Request"/>
 	</sub-flow>
-	<sub-flow name="getBookingInfo" doc:id="5cc62556-f9f4-4c9b-a273-7c2440a3ad79" >
-		<ee:transform doc:name="Transform Message" doc:id="c9b4a726-138d-428e-840b-84683a0ef74d" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-import * from dw::core::Strings
+	<sub-flow name="get-customer" doc:id="9f548d87-8fd8-43e8-9d80-85f94532c84f" >
+		<logger level="DEBUG" doc:name="LOG DEBUG  start For getCustomer flow" doc:id="c24c8af4-cc17-4076-88fa-1fe32803fbef" message="LOG DEBUG  start For getCustomer "/>
+		<http:request method="GET" doc:name="GET /Customer Flow" doc:id="f140434c-8e02-4acb-ac81-25d8500f7030" url="#[Mule::p('sfdc.url') ++ &quot;/customer&quot;]" responseTimeout="${db.responseTimeout}" sendCorrelationId="AUTO">
+			<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+			<http:headers ><![CDATA[#[output application/json
 ---
 {
-bookingId: substringAfter(message.attributes.queryParams.bookingId,"H")
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<create-customer:get-get-all-booking-ids doc:name="Get get all booking ids" doc:id="e02af6d2-de0d-4ca6-90a0-97265cb216e3" config-ref="CreateCustomer_Config" booking-id="#[message.attributes.queryParams.bookingId]" target="getBookingInfo"/>
-		<scatter-gather doc:name="Scatter-Gather" doc:id="3fb1b14d-9969-4b64-b9ed-9c16ca68deaf" >
-			<route >
-				<book-car:get-car-by-car-by-id doc:name="Get car by car by id" doc:id="e9ff5359-ec33-4981-9e1b-fa0773af6cb5" config-ref="BookCar_Config" car-by-id="#[vars.getBookingInfo[0].carId]" client-id="${bookmyholiday.cars.client_id}" client-secret="${bookmyholiday.cars.client_secret}"/>
-				<logger level="INFO" doc:name="Logger" doc:id="b7c11096-1e0e-4afa-af3e-b8d566d7de3e" message="payload"/>
-				<ee:transform doc:name="Transform Message from System Api to Process API" doc:id="045efdb4-5605-47b9-b8cb-736b48f3fee5" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-"cars": 
-payload map ( payload01 , indexOfPayload01 ) -> {
-	regNo: payload01.vechileNo,
-	model: payload01.model,
-	partner: payload01.partner,
-	source: payload01.source,
-	destination: payload01.destination,
-	price: payload01.price
-	}
-
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-			<route >
-				<book-flight:get-flight-by-flight-by-id doc:name="Get flight by flight by id" doc:id="0b546bae-c25e-4859-942b-775dec120055" config-ref="BookFlight_Config" flight-by-id="#[vars.getBookingInfo[0].flightId]"/>
-				<logger level="INFO" doc:name="Logger" doc:id="c53b65fa-2a21-4215-8e78-799ed99ea68d" message="payload"/>
-				<ee:transform doc:name="Transform Message from System Api to Process API" doc:id="5aa7040f-24d5-4997-a7bc-7dbb5f116178" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[output application/json
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/json
 ---
 {
-	flights:  {
-		flightId: payload.response.flightId,
-		partner: payload.response.partner,
-		price: payload.response.price,
-		departureDate: payload.response.departureDate,
-		origin: payload.response.origin,
-		destination: payload.response.destination,
-		noOfPerson: payload.response.noOfPerson,
-		bookingId: payload.response.bookingId
-	}
-}
-
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-			<route >
-				<ee:transform doc:name="Transform Message" doc:id="3dd64f3c-6b2b-46e6-b10d-68bf3997460c" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/xml
-ns ns0 http://www.tibco.com/schemas/tibcoWS/sharedresource/schema/Schema.xsd
----
-{
-	ns0#BookMyHotels: {
-		ns0#Hotels: {
-			ns0#bookingId: vars.getBookingInfo[0].hotelId as String
-		}
-	}
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<wsc:consume doc:name="Consume" doc:id="e797665c-089d-4af9-be8c-c934a5331cf5" config-ref="Web_Service_Consumer_Config" operation="SearchHotels"/>
-				<logger level="INFO" doc:name="Logger" doc:id="1b763c00-5cc5-427f-b376-70a86cdb21fa" message="payload"/>
-				<ee:transform doc:name="Transform Message from Soap XML to JSON" doc:id="b16583c2-9149-4806-bdd6-845455f66bed" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[output application/json
-ns ns0 http://www.tibco.com/schemas/Untitled1/schema/Schema.xsd
----
-"hotels":
-payload.body.ns0#BookmyHotel.*ns0#Hotels map ( hotel , indexOfHotel ) -> {
-	city: hotel.ns0#location default "",
-	hotelName: hotel.ns0#hotelName default "",
-	hotelId: hotel.ns0#hotelId default "",
-	noOfRooms: hotel.ns0#roomType default "",
-	tariff: hotel.ns0#price as String default "",
-	 "portal": "bookMyHoliday.com"
-}
-
-]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</route>
-		</scatter-gather>
-		<ee:transform doc:name="Transform Message" doc:id="2e320fc7-cf31-474b-b5a5-1154d5d9c9c6" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	status: vars.getBookingInfo[0].status as String,
-packages:   
-	flatten(payload..payload)
-	
-
-
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
+	"email" : vars.inputData.customerDetails.emailAddress,
+	"phone" : vars.inputData.customerDetails.phone
+}]]]></http:query-params>
+		</http:request>
+		<logger level="DEBUG" doc:name="LOG DEBUG  end For getCustomer  flow" doc:id="9de44320-8420-4269-b247-61d834a76126" message="LOG DEBUG  start For getCustomer "/>
 	</sub-flow>
-	<sub-flow name="BookPackage" doc:id="a6202258-97a6-4347-ae27-50793ade707c" >
-		<ee:transform doc:name="Transform Message" doc:id="34835473-d42d-4231-bc2e-a2a14b88c0f9" >
+	<sub-flow name="get-cars" doc:id="11e98a59-70ce-4a78-8139-c43cfe90e2f3" >
+		<logger level="DEBUG" doc:name="LOG DEBUG  starts For getCars flow" doc:id="9bb69962-f6ec-415b-91c3-c198b4db0a49" message="LOG DEBUG  starts For getCars flow"/>
+		<http:request method="GET" doc:name="GET/ Cars List" doc:id="9cb1c33d-663f-4d7b-84e5-040786db646f" url="#[Mule::p('db.url') ++ &quot;/cars&quot;]" responseTimeout="${db.responseTimeout}" sendCorrelationId="ALWAYS">
+			<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+			<http:headers><![CDATA[#[output application/json
+---
+{
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+	"make" : vars.inputData.make,
+	"color" : vars.inputData.colour,
+	"model" : vars.inputData.model,
+	"fuelType" : vars.inputData.fuelType,
+	"transmission" : vars.inputData.transmission,
+	"condition" : vars.inputData.condition
+}]]]></http:query-params>
+		</http:request>
+		<logger level="DEBUG" doc:name="LOG DEBUG  end For getCars flow" doc:id="eb861427-ab05-4c47-8fba-f9b1beb7f6c7" message="LOG DEBUG  end For getCars flow"/>
+	</sub-flow>
+	<flow name="update-booking" doc:id="8088faad-540b-48b2-a6a7-dde70d9deeb9" >
+		<logger level="DEBUG" doc:name="LOG DEBUG  starts For update Booking " doc:id="10b66243-18b2-4e91-959b-e08a01b737cd" message="LOG DEBUG  starts For update Booking flow"/>
+		<http:request method="PUT" doc:name="PUT /Update Booking flow" doc:id="d622e59b-1533-45b9-ad2c-25919e9d79b9" url="#[Mule::p('db.url') ++ &quot;/cars&quot;]" responseTimeout="${db.responseTimeout}">
+			<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+			<http:headers ><![CDATA[#[output application/json
+---
+{
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+		</http:request>
+		<logger level="DEBUG" doc:name="LOG DEBUG  ends For update Booking " doc:id="520431a3-517a-46a6-a05f-d80cc52623fd" message="LOG DEBUG  starts For update Booking flow"/>
+	</flow>
+	<flow name="book-car-flow" doc:id="41610063-9164-4eb5-af47-7e370974bb77" >
+		<logger level="DEBUG" doc:name="LOG  DEBUG for Booking Flow" doc:id="bf9ce2a8-2c65-4a8e-a949-5bf491a6729a" message="Booking Flow started"/>
+		<ee:transform doc:name="DW Preparing XML Request for Booking" doc:id="57f77ec2-8475-457a-a49e-fca3b167bef1" >
 			<ee:message >
 			</ee:message>
 			<ee:variables >
-				<ee:set-variable variableName="varsCreateCustomer" ><![CDATA[%dw 2.0
+				<ee:set-variable variableName="inputData" ><![CDATA[%dw 2.0
 output application/json
-import * from dw::core::Strings
 ---
-{
-	fName: payload.packages[0].customer.fName,
-	name: substringBefore(payload.packages.customer[0].name," "),
-	lName: substringAfter(payload.packages.customer[0].name," "),
-	contactNo: payload.packages[0].customer.ContactNumber,
-	address: payload.packages[0].customer.Addrees,
-	emailId: payload.packages[0].customer.emailId,
-	pin: payload.packages[0].customer.pin
-}]]></ee:set-variable>
+payload]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<create-customer:create-customer doc:name="Create customer" doc:id="077145ba-15f3-4e7a-848b-ce9e8ad24a2d" config-ref="CreateCustomer_Config" client-id="${bookmyholiday.customers.client_id}" client-secret="${bookmyholiday.customers.client_secret}" target="getBookId">
-			<create-customer:create-customer-request-data ><![CDATA[#[vars.varsCreateCustomer]]]></create-customer:create-customer-request-data>
-		</create-customer:create-customer>
-		<logger level="INFO" doc:name="Logger" doc:id="7eb52c58-0f0f-4719-b2f9-0babb4bb50cb" message='"Response received from CreateCustomer " #[vars.getBookId]'/>
-		<choice doc:name="Choice" doc:id="056b05c4-7eed-4cae-8afb-b5bd91ec7d9c" >
-			<when expression="#[(vars.getBookId)!=null]">
-				<ee:transform doc:name="Transform Message" doc:id="770e10fa-ad4f-4a12-9424-56da0d4d2af4" >
-					<ee:message >
-					</ee:message>
+		<flow-ref doc:name="Flow-ref-get-cars" doc:id="a1fa3fe3-4800-425c-8d7e-37fa4da40cea" name="get-cars" target="getCarsList"/>
+		<validation:is-not-empty-collection doc:name="If CarList Is not empty collection" doc:id="eb742af9-e6fd-453f-a026-97c4e761ef43" message='#["No cars found!!"]' values="#[vars.getCarsList]" config-ref="Validation_Config"/>
+		<flow-ref doc:name="Flow-ref-get-customer" doc:id="f782a141-d242-40fe-8390-1909112bde71" name="get-customer" target="getCustomerResponse"/>
+		<choice doc:name="condition to check whether customer exist or not" doc:id="db1cb9ce-4065-4ad0-8570-7df8568c5384" >
+			<when expression="#[isEmpty(vars.getCustomerResponse)]">
+				<ee:transform doc:name="DW Input payload for Salesforce" doc:id="f1dcd496-2b57-4b3d-b50a-f8b2fd011948">
+							<ee:message>
+							</ee:message>
 					<ee:variables >
-						<ee:set-variable variableName="varsFlightObj" ><![CDATA[%dw 2.0
-output application/json
+						<ee:set-variable resource="dwl/book-my-car-input-sf.dwl" variableName="customerRequest" />
+					</ee:variables>
+						</ee:transform>
+				<http:request method="POST" doc:name="POST/ customer Salesforce request" doc:id="3a5409ab-df80-4e6b-a6c2-dc1c308b7f22" url="#[Mule::p('sfdc.url') ++ &quot;/customer&quot;]" responseTimeout="${sfdc.responseTimeout}">
+					<reconnect frequency="${sfdc.interval}" count="${sfdc.attempt}"/>
+					<http:body><![CDATA[#[vars.customerRequest]]]></http:body>
+					<http:headers><![CDATA[#[output application/json
 ---
 {
-  "flightId":  payload.packages[1].flights[0].flightCode ,
-
-  "noOfPerson": payload.packages[1].flights[0].NoOfPersons,
-  "bookingId": vars.getBookId.code
-}]]></ee:set-variable>
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+				</http:request>
+				<set-variable value="#[payload.customerId  as String]" doc:name=" Set customerId" doc:id="7a9d9af6-eb00-4830-bf0f-2fde9d34b563" variableName="customerId"/>
+				<ee:transform doc:name="DW Input payload for DB" doc:id="27cce9a4-d3ce-4ebd-a48a-95c1f0a3d925">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable resource="dwl/book-my-car-input-db.dwl" variableName="customerRequestDb" />
 					</ee:variables>
 				</ee:transform>
-				<book-flight:create-flight doc:name="Create flight" doc:id="b7e71bbd-33e5-4afd-a496-3be985f931c6" config-ref="BookFlight_Config" client-id="${bookmyholiday.flights.client_id}" client-secret="${bookmyholiday.flights.client_secret}" target="CreateFlights">
-					<book-flight:create-flight-request-data ><![CDATA[#[vars.varsFlightObj]]]></book-flight:create-flight-request-data>
-				</book-flight:create-flight>
-				<logger level="INFO" doc:name="Logger" doc:id="6fae0d50-13d9-4a48-a4df-9d04fb7b3e59" message='"response from PostFlights " #[vars.CreateFlights]'/>
-			</when>
-			<otherwise >
-				<ee:transform doc:name="Transform Message" doc:id="05a90ccf-5322-42e1-bd5d-5a2a0604d362" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
+				<http:request method="POST" doc:name="POST/ customer Database request" doc:id="25a63d3c-772a-43b0-aabb-d6152d7d5a7e" url="#[Mule::p('db.url') ++ &quot;/customer&quot;]" responseTimeout="${db.responseTimeout}" sendCorrelationId="AUTO">
+					<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+					<http:body><![CDATA[#[vars.customerRequestDb]]]></http:body>
+					<http:headers><![CDATA[#[output application/json
 ---
 {
-	errorCode: "BOOKING_FAILED",
-	errorMessage: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<raise-error doc:name="Raise error" doc:id="c152c018-bcd5-4a93-ba81-281f06593431" type="BOKKING:BOOKING_FAILED" description="Booikng ID not created"/>
-			</otherwise>
-		</choice>
-		<choice doc:name="Choice" doc:id="07014c4a-50e3-4aab-bd6f-6bc75351be1c" >
-			<when expression="#[(vars.CreateFlights)!=null]">
-				<ee:transform doc:name="Transform Message" doc:id="f08eefec-3c42-4131-baac-e2433081d590" >
-					<ee:message >
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="varPostCarsReq" ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"regNo": payload.packages[3].cars[0].RegId,
-	"bookingDate": payload.packages[3].cars[0].bookingDate,
-	"bookingId": vars.getBookId.code
-}]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<book-car:create-car doc:name="Create car" doc:id="79adea27-6e98-4128-be13-752a89e24289" config-ref="BookCar_Config" client-id="${bookmyholiday.cars.client_id}" client-secret="${bookmyholiday.cars.client_secret}" target="createCars">
-					<book-car:create-car-request-data ><![CDATA[#[vars.varPostCarsReq]]]></book-car:create-car-request-data>
-				</book-car:create-car>
-				<logger level="INFO" doc:name="Post Car Logger" doc:id="30c42a8d-d3e9-43be-ba28-020425cd0dcd" message='"Response received from PostCar: #[vars.createCars]'/>
-			</when>
-			<otherwise >
-				<ee:transform doc:name="Transform Message" doc:id="731e2b3b-1373-4447-9602-b9d4a73229e0" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	errorCode: "BOOKING_FAILED",
-	errorMessage: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<raise-error doc:name="Raise error" doc:id="9615d4b7-90a4-4c8f-8e03-c739159d18ff" type="BOKKING:BOOKING_FAILED" description="Flights Not Booked"/>
-			</otherwise>
-		</choice>
-		<choice doc:name="Choice" doc:id="4883c35c-73e3-4bab-8ec8-a472e4a7a07a" >
-			<when expression="#[(vars.createCars)!=null]">
-				<ee:transform doc:name="Transform Message" doc:id="f65ef6f3-8b1b-421f-8f71-ac909d44a2be" >
-					<ee:message >
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="varPostHotelsSoapXML" ><![CDATA[%dw 2.0
-output application/xml
-ns ns0 http://www.tibco.com/schemas/tibcoWS/sharedresource/schema/Schema.xsd2
----
-{
-	ns0#BookHotelsReq: {
-		ns0#hotelId: payload.packages[2].hotels[0].hotelID,
-		ns0#checkinDate: payload.packages[2].hotels[0].checkInDate,
-		ns0#checkoutDate: payload.packages[2].hotels[0].checkOutDate,
-		ns0#bookingId: vars.getBookId.code
-	}
-}]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<wsc:consume operation="BookHotel" doc:name="Consume" doc:id="714a8721-3315-43bd-9007-9f01d372b60d" config-ref="Web_Service_Consumer_Config">
-					<wsc:message >
-						<wsc:body ><![CDATA[#[vars.varPostHotelsSoapXML]]]></wsc:body>
-					</wsc:message>
-				</wsc:consume>
-				<logger level="INFO" doc:name="Logger" doc:id="404950a2-4326-45a3-a37c-3a8090121e7b" message='"response for Hotels create " #[payload]'/>
-			</when>
-			<otherwise >
-				<ee:transform doc:name="Transform Message" doc:id="20e9ce18-67e2-4e7b-9cbf-f24dc2bffbba" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	errorCode: "BOOKING_FAILED",
-	errorMessage: error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<raise-error doc:name="Raise error" doc:id="96a6caa4-f4ab-4eab-8337-a4b505560d56" type="BOKKING:BOOKING_FAILED" description="cars not booked"/>
-			</otherwise>
-		</choice>
-		<ee:transform doc:name="Transform Message" doc:id="ace59aea-082f-4c27-b5f9-b66bfe904c4b" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"bookingId": "BMH"  ++ vars.getBookId.code as String
-}]]></ee:set-payload>
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+				</http:request>
+				<ee:transform doc:name="DW  customer response  payload from DB" doc:id="99415c14-e766-4e94-ab71-74ae888c51c3">
+			<ee:message>
 			</ee:message>
+			<ee:variables>
+						<ee:set-variable resource="dwl/book-my-car-db-booking-response.dwl" variableName="bookRequest" />
+			</ee:variables>
 		</ee:transform>
-	</sub-flow>
-	<sub-flow name="DeleteBooking" doc:id="f610c4c2-b65d-4d9f-a0a0-291d3cda5c18" >
-		<logger level="INFO" doc:name="Logger" doc:id="814c842d-1130-4ba1-9fe2-dca7badf476a" message="'Cancelling Items for'  #[message.attributes.queryParams.bookingId]  ' for ' #[message.attributes.queryParams.cancelItem]"/>
-		<ee:transform doc:name="Transform Message" doc:id="f19b1e74-bb75-4598-8120-8f51cd8c9039" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
-import * from dw::core::Strings
+			</when>
+			<otherwise >
+				<logger level="DEBUG" doc:name="LOG DEBUG for existing customer" doc:id="20544c7c-65db-4c23-b35b-07ec1e45350d" message="Customer Existing creating logs"/>
+				<ee:transform doc:name="DW Payload resonse for existing customer" doc:id="98194c77-785d-474d-923d-f75dfd2beb50" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable resource="dwl/book-my-car-booking-response.dwl" variableName="bookRequest" />
+					</ee:variables>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="Flow-ref-bookCarRequest-Subflow" doc:id="7c34b1ff-a598-43aa-8706-e43d10c50eca" name="book-car-request-subflow" />
+		<!-- [STUDIO:"Try"]<try doc:name="Try" doc:id="c6ecdd2d-83c8-4326-a6c8-429bc2eacad2" >
+			<email:send doc:name="Send" doc:id="99184177-0326-4d8f-aebd-bc76e2b7b226" config-ref="Email_SMTP" fromAddress="${smtp.username}" subject='"Booking succesful !!!"' toAddresses="#[p('smtp.toAddress')splitBy(&quot;:&quot;)&#93;" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d3bdca30-0079-4d6e-b3a0-cc5eb0ef9eca" >
+					<logger level="INFO" doc:name="Logger" doc:id="34fa44ed-cf06-4d31-a8c2-cddf2b3ac055" message='"Send mail not working"'/>
+				</on-error-continue>
+			</error-handler>
+		</try> [STUDIO] -->
+		<logger level="DEBUG" doc:name="LOG DEBUG Booking Response " doc:id="d6509ec6-a491-49fa-81aa-06385e87d2c2" message="Booking Done Debug Logs END"/>
+	</flow>
+	<flow name="cancel-booking" doc:id="75d9e01f-d575-4724-a497-b663c11518fc" >
+		<logger level="DEBUG" doc:name="LOG DEBUG  starts For cancel Booking " doc:id="3079ebd4-fe28-4096-b5e9-73ea463a875e" message="LOG DEBUG  starts For cancel Booking flow"/>
+		<set-variable value="#[attributes.uriParams.bookingId]" doc:name="Set BookingID" doc:id="8ff921a4-e0ba-4a87-a297-ed2652ccd219" variableName="bookingId"/>
+		<http:request method="DELETE" doc:name="DELETE /Cancel Booking Flow" doc:id="8cff9347-e2ec-4172-8c8b-772f5c9e3bfb" url="#[Mule::p('db.url') ++ &quot;/cars/&quot; ++ vars.bookingId]" responseTimeout="${db.responseTimeout}" sendCorrelationId="AUTO">
+			<reconnect frequency="${db.interval}" count="${db.attempt}"/>
+			<http:headers ><![CDATA[#[output application/json
 ---
 {
-	bookId: substringAfter(message.attributes.queryParams.bookingId,"H")
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<set-variable value="message.attributes.queryParams.cancelItem" doc:name="getCancelItem" doc:id="b30e7277-2f35-404b-aae0-75085df73a56" variableName="getCancelItem"/>
-		<create-customer:delete-cancel-bookings doc:name="Delete cancel bookings" doc:id="8232171d-031d-490f-a6bc-51edd41b8cc3" config-ref="CreateCustomer_Config" booking-id="#[payload.bookId]"/>
-		<logger level="INFO" doc:name="Logger" doc:id="41db8c4b-f18d-4621-9b8e-3e25260e416c" message='"Response From Delete Logger for bookId " #[payload.bookId]'/>
-	</sub-flow>
+	"client_id": p('secure::sf.client_id'),
+    "client_secret": p('secure::sf.client_secret')
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/json
+---
+{
+	"bookingId" : attributes.uriParams.'bookingId'
+}]]]></http:uri-params>
+		</http:request>
+		<logger level="DEBUG" doc:name="LOG DEBUG  end For cancel Booking " doc:id="33da3a33-da1b-44d0-bdb1-79b2cb1b58e3" message="LOG DEBUG  end For cancel Booking flow"/>
+	</flow>
 </mule>

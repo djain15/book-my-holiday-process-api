@@ -1,0 +1,16 @@
+{
+  "condition": "new",
+  "make": "Maruti",
+  "model": "Baleno",
+  "colour": "white",
+  "class": "hatchback",
+  "fuelType": "petro",
+  "transmission": "m",
+  "year": "2024",
+  "customerDetails": {
+    "name": "Durgesh Kumar",
+    "phone": "1122334455",
+    "emailAddress": "abc@gmail.com",
+    "city": "Banglore"
+  }
+}

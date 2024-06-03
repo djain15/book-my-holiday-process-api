@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="db-sfdc-sync-batch-flow" doc:id="2f54fcbc-2b16-4c7d-8908-22fff77213e7" initialState="started">
+		<scheduler doc:name="Run Daily" doc:id="e04ddbc9-e558-45b4-8bd1-2c31bdaf5b4b" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="DAYS"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[uuid()]" doc:name="Set Transaction Id" doc:id="5f1d7136-e907-4ebf-a305-155917074904" variableName="transactionId" />
+		<os:retrieve doc:name="Retrieve LastUpdate" doc:id="43216bec-096b-4847-9e4d-ab5edbb2c44e" key="bookingDate" objectStore="Object_store" target="bookingDate">
+			<os:default-value><![CDATA[2024-05-15]]></os:default-value>
+		</os:retrieve>
+		<logger level="DEBUG" doc:name="LOG Transaction Id and Last Run Time" doc:id="bc02e8c7-8978-4d81-8742-52a6511e4f9e" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; "TransactionTime" : now(),&#10; "FlowName" :flow.name,&#10; "LastRunTime": payload,&#10; "TransactionId" : vars.transactionId&#10;}]' />
+		<flow-ref doc:name="Flow-Ref-db-sync-batch-implementation-subflow" doc:id="f48a2e5b-5f80-4f6d-bce8-31926d65ee9a" name="employee-sync-batch-implementation-subflow" />
+		<ee:transform doc:name="Transform Message" doc:id="c5e70dcb-6c92-4fc7-b601-fb170f78ed57">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a28c6eb1-ebaf-44a2-95b9-13f71ca2bd41" type="ANY">
+				<logger level="ERROR" doc:name="LOG Exception" doc:id="cc5b06bc-c2ad-4c8f-8a59-a78feac7e358" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10; "TransactionTime" : now(),&#10; "FlowName" :flow.name,&#10; "InputPayloadToSFMC": payload,&#10; "ErrorResponse" : error&#10;}]'/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	
+	
+	</mule>

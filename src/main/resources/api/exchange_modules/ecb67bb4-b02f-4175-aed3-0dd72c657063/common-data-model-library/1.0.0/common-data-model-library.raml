@@ -1,0 +1,65 @@
+#%RAML 1.0 Library
+types:
+
+  apiStatus:
+    displayName: API Status
+    description: Status of the API request
+    enum:
+     - SUCCESS
+     - FAILURE
+     
+  errorCode:
+    type: integer
+    description: "Error codes to be used across APIs"
+    enum:
+      - 400
+      - 401
+      - 403
+      - 404
+      - 405
+      - 408
+      - 500
+      - 501
+      - 503
+      
+
+      
+  apiErrorResponse:
+    type: object
+    description: "API Error response to be used across APIs"
+    properties:
+      code: errorCode
+      status: apiStatus
+      transactionId: string
+      response:
+        type: object
+        properties:
+          message: string
+          details: string
+
+  apiSuccessResponse:
+    type: object
+    description: "API Success response to be used across APIs"
+    properties:
+      code: integer
+      status: apiStatus
+      transactionId: string
+      response: object
+  
+  apiSuccessResponseArray:
+    type: object
+    description: "API Success response array to be used across APIs"
+    properties:
+      code: integer
+      status: apiStatus
+      transactionId: string
+      response: object[]
+      
+  apiSuccessResponseSimpleArray:
+    type: object
+    description: "API Success response array to be used across APIs"
+    properties:
+      code: integer
+      status: apiStatus
+      transactionId: string
+      response: array

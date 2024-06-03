@@ -1,0 +1,21 @@
+%dw 2.0
+
+type auto_9f548d87_8fd8_43e8_9d80_85f94532c84f_Input_Variables_inputData = {
+  condition: String, 
+  colour: String, 
+  transmission: String, 
+  fuelType: String, 
+  year: String, 
+  model: String, 
+  customerDetails: {
+    emailAddress?: String, 
+    phone?: String, 
+    city?: String, 
+    name?: String, 
+    _?: Any
+  }, 
+  make: String, 
+  class: String, 
+  _?: Any
+}
+

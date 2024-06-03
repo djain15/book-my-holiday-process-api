@@ -1,0 +1,102 @@
+#%RAML 1.0
+title: bookmycar-process-api
+uses:
+  traits : /exchange_modules/ecb67bb4-b02f-4175-aed3-0dd72c657063/common-traits-library/1.0.0/common-traits-library.raml
+ 
+  cars: /datatype/cars.raml
+ 
+
+protocols:
+  - HTTP
+  - HTTPS
+
+/v1:
+  /cars:
+    
+      
+    post:
+      is : [traits.common-traits]
+      body:
+       application/json:
+        type: cars.bookCarRq
+        examples:
+          input : !include /examples/bookCarReq.json
+
+      responses:
+        201:
+          body:
+            application/json:
+              type: cars.bookCarRes
+              examples:
+                output : !include /examples/bookCarRes.json
+    put:
+      is : [traits.common-traits]
+      body:
+        application/json:
+         type: cars.UpdateCarBookingReq
+         examples:
+           input : !include /examples/updateCarBookingReq.json
+      responses:
+        201:
+          body:
+            application/json:
+              examples:
+                output : !include /examples/updateCarBookingRes.json
+    
+    /{bookingId}:
+      delete:
+        is : [traits.common-traits]
+        responses:
+          200:
+            body:
+              application/json:
+                type : object
+                properties:
+                  bookingId : string
+                example : 
+                 {"bookingId" : " 123 is cancelled"}
+
+              
+  /customer:
+    post:
+      is : [traits.common-traits]
+      body:
+        application/json:
+          type: cars.UpdateCustomerReq
+          examples:
+            input : !include /examples/customerReq.json
+      responses:
+        201:
+          body:
+            application/json:
+              type: cars.UpdateCustomerRes
+              examples:
+                output : !include /examples/customerRes.json
+
+               
+  
+
+          
+            
+        
+          
+    
+
+
+        
+   
+
+
+    
+
+
+                
+
+                
+
+            
+
+      
+
+
+ 

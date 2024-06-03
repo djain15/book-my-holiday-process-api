@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<sub-flow name="send-mail-subflow" doc:id="eb786cc1-1605-4b33-b6d7-560d63cfa513" >
+		<set-variable value='#[output text/plain&#10;---&#10;"Hi Team," ++ "\n" ++ &#10;" Please refer the error information provided below for the reference." ++  &#10;"\n"  ++  &#10;"\n" ++ "- Error Description - " ++ (  payload.response.details as String default "") ++  &#10;"\n" ++ "- Error Code - " ++ (payload.response.message as String default "" ) ++  &#10;"\n" ++ "- Correlation Id - " ++ (vars.correlationId default correlationId) ++  &#10;"\n" ++ "- Execution Date - " ++  (now() &gt;&gt; "IST") ++  &#10;"\n" ++ "- Application Name - " ++ "book-my-car-process-api" ++  &#10;"\n" ++&#10;"\n" ++ "Regards," ++&#10;"\n" ++ "Mulesoft Application" ++&#10;"\n" ++&#10;"\n" ++ "Thank you"]' doc:name="content" doc:id="78c71b24-6e76-4c09-80e9-be2294f468bd" variableName="content"/>
+		<try doc:name="Try" doc:id="5d4a1acc-7566-4f8e-b770-ebd6b70bc1dd" >
+			<email:send doc:name="Send" doc:id="29df4ff2-11e8-479b-a6fa-80b16ae4ff20" config-ref="Email_SMTP" fromAddress="${smtp.username}" subject="#[upper(p('env')) ++ &quot; : &quot; ++ &quot;Error notification for Car Booking : &quot; ++ correlationId]" toAddresses="#[p('smtp.toAddress')splitBy(&quot;:&quot;)]" >
+				<email:body >
+					<email:content ><![CDATA[#[vars.content]]]></email:content>
+				</email:body>
+			</email:send>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3506d525-2d7a-45bd-9445-997a845bf70a" >
+					<logger level="INFO" doc:name="Logger" doc:id="03da902d-2164-45ca-bdcc-b9ffd3d27e38" message='"Send mail not working"'/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
+	<error-handler name="global-error-handler" doc:id="7e2fe79c-b0bf-4f75-acad-cf94daae943f" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="91c2f92f-b6ff-4433-8164-4f327dfddbcb" type="HTTP:BAD_GATEWAY, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+			<ee:transform doc:name="Transform HTTP ERROR" doc:id="f81c38c4-2180-495b-b3b5-e14b906bea7f" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="239f84ab-2192-4712-8af9-080321d3282a" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	errorCode: payload.errorMessage.attributes.statusCode,&#10;	failingComponent: error.failingComponent as String default "",&#10;	errorDescription: error.detailedDescription as String default "",&#10;	correlationId: correlationId&#10;}]' />
+			<ee:transform doc:name="Transform Error Response" doc:id="ac7fd593-5768-443c-8af5-b3aac25093bc" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var sysError = payload.errorMessage.payload default null
+---
+if(sysError == null)
+{	
+  "code": payload.errorMessage.attributes.statusCode default 500,
+  "status": "FAILURE",
+  "transactionId": payload.EFXHdr.tracking.trnId default vars.correlationId,
+  "response": {
+    "message": payload.errorType.identifier,
+    "details": payload.detailedDescription as String default ""
+  }
+}
+else
+ sysError]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="a75e6fec-f188-429b-b276-00af87b4e1d0" name="send-mail-subflow"/>
+		
+
+</on-error-continue>
+		
+		<on-error-continue type="APIKIT:BAD_REQUEST" doc:name="On Error Continue">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+error]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="a259dddd-52ca-4344-aa8f-3f42eaddcfa4" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	errorCode: payload.errorMessage.attributes.statusCode,&#10;	failingComponent: error.failingComponent as String default "",&#10;	errorDescription: error.detailedDescription as String default "",&#10;	correlationId: correlationId&#10;}]'/>
+			<ee:transform doc:name="Transform Message" doc:id="da26f6d5-f065-466f-9657-389c734817f5" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var sysError = payload.errorMessage.payload default null
+---
+if(sysError == null)
+{	
+  "code": payload.errorMessage.attributes.statusCode default 500,
+  "status": "FAILURE",
+  "transactionId": payload.EFXHdr.tracking.trnId default vars.correlationId,
+  "response": {
+    "message": payload.errorType.identifier,
+    "details": payload.detailedDescription as String default ""
+  }
+}
+else
+ sysError]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="447ad623-6e99-43f5-9501-c2fe09652800" name="send-mail-subflow"/>
+            
+
+</on-error-continue>
+            <on-error-continue type="APIKIT:NOT_FOUND" doc:name="On Error Continue-APIKIT:NOT_FOUND">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="e631c889-350c-4314-9102-b2c3143f32d4" name="send-mail-subflow"/>
+            
+</on-error-continue>
+            <on-error-continue type="APIKIT:METHOD_NOT_ALLOWED" doc:name="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="302f7eae-6c82-4b48-8c6f-64072cde8a2b" name="send-mail-subflow"/>
+            
+</on-error-continue>
+            <on-error-continue type="APIKIT:NOT_ACCEPTABLE" doc:name="On Error Continue --APIKIT:NOT_ACCEPTABLE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="415e4284-b2e2-47bd-b58c-d7d3d15a1251" name="send-mail-subflow"/>
+            
+</on-error-continue>
+            <on-error-continue type="APIKIT:UNSUPPORTED_MEDIA_TYPE" doc:name="On Error Continue --APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="a4978e66-e21d-46dd-bda0-a880ee030457" name="send-mail-subflow"/>
+            
+</on-error-continue>
+            <on-error-continue type="APIKIT:NOT_IMPLEMENTED" doc:name="On Error Continue--APIKIT:NOT_IMPLEMENTED">
+                <ee:transform doc:name="Transform Message">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="a0221634-d61c-45e7-93e8-6ff292bbb1af" name="send-mail-subflow"/>
+            
+</on-error-continue>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f3abe4d1-8ee3-44d4-9a5b-3d5c6a3064f0" type="ANY">
+			<ee:transform doc:name="Transform ANY ERROR" doc:id="bd875d73-3b95-41fc-bbbb-64c4e6c8047f" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+error]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="7b5d224e-1c6f-4dbc-b8ce-8e610e82064d" message='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	errorCode: payload.errorMessage.attributes.statusCode,&#10;	failingComponent: error.failingComponent as String default "",&#10;	errorDescription: error.detailedDescription as String default "",&#10;	correlationId: correlationId&#10;}]' />
+			<ee:transform doc:name="TRANSFORM Error Response" doc:id="bc46336e-cdfd-42bb-8ee5-939d1a80c30a" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var sysError = payload.errorMessage.payload default null
+---
+if(sysError == null)
+{	
+  "code": payload.errorMessage.attributes.statusCode default 500,
+  "status": "FAILURE",
+  "transactionId": payload.EFXHdr.tracking.trnId default vars.correlationId,
+  "response": {
+    "message": payload.errorType.identifier,
+    "details": payload.detailedDescription as String default ""
+  }
+}
+else
+ sysError]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="8b565337-f513-4da2-b077-dbd80387ca40" name="send-mail-subflow"/>
+		
+</on-error-continue>
+	</error-handler>
+</mule>
